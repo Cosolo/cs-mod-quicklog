@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CS-MOD Log">
+<meta name="theme-color" content="#1F4E79">
+<link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxODAgMTgwIj48cmVjdCB3aWR0aD0iMTgwIiBoZWlnaHQ9IjE4MCIgcng9IjQwIiBmaWxsPSIjMUY0RTc5Ii8+PHRleHQgeD0iOTAiIHk9IjEwOCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjQ4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkNTLU1PRDwvdGV4dD48L3N2Zz4=">
+<title>CS-MOD Quick Log</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #f4f6fa;
+    color: #1f2937;
+    overscroll-behavior-y: contain;
+  }
+  body {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    min-height: 100vh;
+  }
+  .container { max-width: 640px; margin: 0 auto; padding: 16px 16px 80px; }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, #1F4E79 0%, #2563EB 100%);
+    color: white;
+    padding: 18px 18px 16px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 14px rgba(31, 78, 121, 0.18);
+  }
+  header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  header .sub { opacity: 0.85; font-size: 13px; margin-top: 2px; }
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+  .stat {
+    background: rgba(255,255,255,0.18);
+    border-radius: 12px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .stat .v { font-size: 20px; font-weight: 700; line-height: 1; }
+  .stat .l { font-size: 11px; opacity: 0.85; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+
+  /* Card */
+  .card {
+    background: white;
+    border-radius: 18px;
+    padding: 16px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .card h2 {
+    margin: 0 0 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6B7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Tab bar */
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+    background: #E5E7EB;
+    padding: 4px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+  .tab {
+    padding: 10px;
+    text-align: center;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #6B7280;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tab.active { background: white; color: #1F4E79; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
+  /* Sync badge */
+  .sync-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 20px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    margin-top: 10px;
+  }
+  .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #9CA3AF; }
+  .sync-dot.ok { background: #4ADE80; }
+  .sync-dot.busy { background: #FACC15; animation: pulse 1s infinite; }
+  .sync-dot.err { background: #F87171; }
+  @keyframes pulse { 50% { opacity: 0.4; } }
+
+  /* Form */
+  .client-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .client-btn {
+    padding: 14px 8px;
+    border: 2px solid #E5E7EB;
+    background: white;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .client-btn:active { transform: scale(0.96); }
+  .client-btn.selected {
+    background: #1F4E79;
+    color: white;
+    border-color: #1F4E79;
+  }
+
+  select, input[type="text"], input[type="number"], input[type="date"], textarea {
+    width: 100%;
+    padding: 14px 14px;
+    border: 2px solid #E5E7EB;
+    border-radius: 12px;
+    font-size: 16px;
+    font-family: inherit;
+    background: white;
+    color: #1F2937;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  select { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    padding-right: 40px;
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #2563EB; }
+
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .row.three { grid-template-columns: repeat(3, 1fr); }
+
+  .hours-presets {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .hour-preset {
+    padding: 10px 4px;
+    border: 1.5px solid #E5E7EB;
+    background: white;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+  }
+  .hour-preset.selected {
+    background: #2563EB;
+    color: white;
+    border-color: #2563EB;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6B7280;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .field { margin-bottom: 12px; }
+
+  .btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #1F4E79 0%, #2563EB 100%);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    transition: transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn.secondary {
+    background: white;
+    color: #1F4E79;
+    border: 2px solid #E5E7EB;
+    box-shadow: none;
+  }
+  .btn.danger {
+    background: white;
+    color: #DC2626;
+    border: 2px solid #FEE2E2;
+    box-shadow: none;
+  }
+
+  /* Entry list */
+  .entry {
+    background: white;
+    border-radius: 14px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    border-left: 4px solid #2563EB;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+  .entry-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+  .entry-client {
+    font-weight: 700;
+    font-size: 14px;
+    color: #1F4E79;
+  }
+  .entry-meta {
+    font-size: 12px;
+    color: #6B7280;
+  }
+  .entry-desc {
+    font-size: 14px;
+    color: #374151;
+    line-height: 1.4;
+    margin: 4px 0;
+  }
+  .entry-cat {
+    display: inline-block;
+    background: #F3F4F6;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    color: #6B7280;
+    margin-right: 6px;
+  }
+  .entry-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+  }
+  .entry-action {
+    flex: 1;
+    padding: 6px;
+    border: 1px solid #E5E7EB;
+    background: white;
+    border-radius: 8px;
+    font-size: 12px;
+    color: #6B7280;
+    cursor: pointer;
+  }
+  .entry-action.delete { color: #DC2626; }
+
+  /* Monthly view */
+  .month-summary {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .month-client {
+    background: white;
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid #E5E7EB;
+  }
+  .month-client-name { font-weight: 700; font-size: 14px; color: #1F4E79; margin-bottom: 4px; }
+  .month-client-hours { font-size: 22px; font-weight: 700; color: #2563EB; }
+  .month-client-tasks { font-size: 12px; color: #6B7280; margin-top: 2px; }
+
+  .empty {
+    text-align: center;
+    padding: 30px 20px;
+    color: #9CA3AF;
+    font-size: 14px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1F2937;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 100;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    max-width: 90%;
+  }
+  .toast.show { opacity: 1; }
+
+  /* Modal */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 200;
+    padding: 12px;
+  }
+  .modal.show { display: flex; }
+  .modal-content {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .modal h3 { margin: 0 0 12px; font-size: 18px; }
+  .modal pre {
+    background: #F3F4F6;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 11px;
+    overflow-x: auto;
+    max-height: 50vh;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  /* Hidden tab content */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  @media (display-mode: standalone) {
+    body { padding-top: max(env(safe-area-inset-top), 12px); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>CS-MOD Quick Log</h1>
+    <div class="sub" id="todayLabel">—</div>
+    <div class="stats">
+      <div class="stat"><div class="v" id="statToday">0.0</div><div class="l">Danas</div></div>
+      <div class="stat"><div class="v" id="statWeek">0.0</div><div class="l">Tjedan</div></div>
+      <div class="stat"><div class="v" id="statMonth">0.0</div><div class="l">Mjesec</div></div>
+    </div>
+    <div class="sync-badge" id="syncBadge" onclick="document.querySelector('.tab[data-tab=settings]').click()">
+      <span class="sync-dot" id="syncDot"></span>
+      <span id="syncLabel">Sync nije postavljen</span>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="add">Novi</div>
+    <div class="tab" data-tab="list">Zadnji</div>
+    <div class="tab" data-tab="month">Mjesec</div>
+    <div class="tab" data-tab="settings">⚙</div>
+  </div>
+
+  <!-- ADD TAB -->
+  <div class="tab-content active" id="tab-add">
+    <div class="card">
+      <h2>Klijent</h2>
+      <div class="client-grid" id="clientGrid"></div>
+    </div>
+
+    <div class="card">
+      <div class="field">
+        <label>Kategorija</label>
+        <select id="category">
+          <option value="">— odaberi —</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Opis posla</label>
+        <textarea id="description" placeholder="Što si radio? Npr: Ažuriranje PBI Dnevnog izvještaja, korekcija mapiranja konta..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Sati</label>
+        <input type="number" id="hours" step="0.25" min="0" placeholder="0.0">
+        <div class="hours-presets">
+          <div class="hour-preset" data-h="0.25">15min</div>
+          <div class="hour-preset" data-h="0.5">30min</div>
+          <div class="hour-preset" data-h="1">1h</div>
+          <div class="hour-preset" data-h="1.5">1.5h</div>
+          <div class="hour-preset" data-h="2">2h</div>
+          <div class="hour-preset" data-h="4">4h</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>Datum</label>
+          <input type="date" id="entryDate">
+        </div>
+        <div class="field">
+          <label>Sustav / Modul</label>
+          <input type="text" id="system" placeholder="opcionalno" list="systemList">
+          <datalist id="systemList"></datalist>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Napomena (opcionalno)</label>
+        <input type="text" id="note" placeholder="">
+      </div>
+
+      <button class="btn" id="saveBtn">+ Spremi zapis</button>
+    </div>
+  </div>
+
+  <!-- LIST TAB -->
+  <div class="tab-content" id="tab-list">
+    <div class="card">
+      <h2>Zadnji unosi</h2>
+      <div id="entryList"></div>
+    </div>
+  </div>
+
+  <!-- MONTH TAB -->
+  <div class="tab-content" id="tab-month">
+    <div class="card">
+      <h2>Mjesec — pregled po klijentu</h2>
+      <div class="field">
+        <label>Mjesec</label>
+        <select id="monthPick"></select>
+      </div>
+      <div class="month-summary" id="monthSummary"></div>
+    </div>
+    <div class="card">
+      <h2>Detalj po klijentu</h2>
+      <div id="monthDetail"></div>
+    </div>
+  </div>
+
+  <!-- SETTINGS TAB -->
+  <div class="tab-content" id="tab-settings">
+    <div class="card">
+      <h2>GitHub Gist sinkronizacija</h2>
+      <p style="font-size: 13px; color: #6B7280; line-height: 1.5; margin: 0 0 14px;">
+        Sve zapise drži privatan GitHub Gist. Svaki uređaj na kojem postaviš isti token i Gist ID čita i piše u isti gist. Detaljne upute vidi <strong>KAKO POSTAVITI GitHub Sync.md</strong> u istoj mapi.
+      </p>
+
+      <div class="field">
+        <label>GitHub Personal Access Token</label>
+        <input type="password" id="ghToken" placeholder="ghp_... ili github_pat_...">
+      </div>
+
+      <div class="field">
+        <label>Gist ID (ostavi prazno za prvi put)</label>
+        <input type="text" id="ghGistId" placeholder="npr. a1b2c3d4e5f6...">
+      </div>
+
+      <div class="row">
+        <button class="btn" id="syncSaveBtn">Spremi i poveži</button>
+        <button class="btn secondary" id="syncNowBtn">Sync sada</button>
+      </div>
+
+      <div id="syncStatus" style="margin-top: 14px; font-size: 13px; color: #6B7280; line-height: 1.5;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Manualni izvoz</h2>
+      <p style="font-size: 13px; color: #6B7280; margin: 0 0 12px;">Ako iz nekog razloga sync ne radi, ovi gumbi i dalje rade.</p>
+      <button class="btn secondary" id="exportBtn" style="margin-bottom: 8px;">Kopiraj sve zapise (za Claude)</button>
+      <button class="btn secondary" id="downloadBtn">Spremi JSON datoteku</button>
+    </div>
+
+    <div class="card">
+      <h2>Opasno</h2>
+      <button class="btn danger" id="clearBtn">Obriši sve lokalne podatke</button>
+      <p style="font-size: 12px; color: #6B7280; margin-top: 10px;">
+        Briše samo lokalnu kopiju u browseru. Ako je sync postavljen, sljedeći "Sync sada" će povući nazad iz Gista.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal" id="exportModal">
+  <div class="modal-content">
+    <h3>Sinkronizacija s Claudeom</h3>
+    <p style="color:#6B7280; font-size: 14px; line-height: 1.5;">Tekst dolje je kopiran u clipboard. Otvori Claude chat i zalijepi — ja ću prebaciti zapise u Excel LOG i (kad bude trebalo) generirati specifikacije.</p>
+    <pre id="exportContent"></pre>
+    <button class="btn" onclick="document.getElementById('exportModal').classList.remove('show')">Zatvori</button>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'csmod_quicklog_v1';
+const SYNC_KEY = 'csmod_sync_v1';
+const GIST_FILENAME = 'csmod-log.json';
+
+const CLIENTS = ['LU-MA', 'Fisherija', 'Bosnić', 'Slavonica', 'ORKA grupa', 'Interno'];
+const CATEGORIES = [
+  'Ažuriranje izvještaja',
+  'Izrada novog izvještaja',
+  'Korekcija / Bug fix',
+  'Migracija podataka',
+  'Konsolidacija podataka',
+  'Ad-hoc analiza',
+  'Planiranje / Rebalans',
+  'PowerApps',
+  'Mapiranje konta',
+  'Server / IT održavanje',
+  'Sastanak / Komunikacija',
+  'Ostalo'
+];
+
+// Sustavi po klijentu (suggestions)
+const SYSTEMS = {
+  'LU-MA': ['PBI Dnevni', 'PBI Artikli i Komercijalisti', 'PBI Kontrola zaliha', 'Horizont', 'Remaris', 'e-Računi', 'Predložak planiranja 2025'],
+  'Fisherija': ['PBI FoodCourt', 'PBI Troškovi/EBITDA', 'TheMeat dnevni', 'TheMeat mjesečni', 'PowerApps', 'Server', 'RDG predložak'],
+  'Bosnić': ['PBI Dnevni', 'PBI Troškovi', 'Mesni asortiman', 'Pregled zaliha', 'Mapiranje kupaca', 'Dostavne zone'],
+  'Slavonica': ['PBI Dnevni', 'PBI Mjesečni', 'PBI Plaće (sva društva)', 'Ad-hoc tablice'],
+  'ORKA grupa': ['Financijski screening'],
+  'Interno': ['Administracija', 'Računi', 'KPR']
+};
+
+let selectedClient = null;
+let selectedHours = null;
+
+// === Storage ===
+function loadEntries() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch (e) { return []; }
+}
+function saveEntries(entries) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+}
+function visibleEntries() {
+  return loadEntries().filter(e => !e.deleted);
+}
+
+// === UI Setup ===
+function setupClients() {
+  const grid = document.getElementById('clientGrid');
+  grid.innerHTML = '';
+  CLIENTS.forEach(c => {
+    const btn = document.createElement('div');
+    btn.className = 'client-btn';
+    btn.textContent = c;
+    btn.addEventListener('click', () => {
+      selectedClient = c;
+      grid.querySelectorAll('.client-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      // Update system suggestions
+      const list = document.getElementById('systemList');
+      list.innerHTML = '';
+      (SYSTEMS[c] || []).forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        list.appendChild(opt);
+      });
+    });
+    grid.appendChild(btn);
+  });
+}
+
+function setupCategories() {
+  const sel = document.getElementById('category');
+  CATEGORIES.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    sel.appendChild(opt);
+  });
+}
+
+function setupHourPresets() {
+  document.querySelectorAll('.hour-preset').forEach(p => {
+    p.addEventListener('click', () => {
+      const h = parseFloat(p.dataset.h);
+      document.getElementById('hours').value = h;
+      selectedHours = h;
+      document.querySelectorAll('.hour-preset').forEach(x => x.classList.remove('selected'));
+      p.classList.add('selected');
+    });
+  });
+}
+
+function setupTabs() {
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => {
+      const target = t.dataset.tab;
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      document.getElementById('tab-' + target).classList.add('active');
+      if (target === 'list') renderList();
+      if (target === 'month') renderMonth();
+    });
+  });
+}
+
+function todayISO() {
+  const d = new Date();
+  d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  return d.toISOString().slice(0, 10);
+}
+
+function formatDateHR(iso) {
+  if (!iso) return '';
+  const parts = iso.split('-');
+  return `${parts[2]}.${parts[1]}.${parts[0]}.`;
+}
+
+// === Save ===
+function save() {
+  if (!selectedClient) { toast('Odaberi klijenta'); return; }
+  const cat = document.getElementById('category').value;
+  const desc = document.getElementById('description').value.trim();
+  const hours = parseFloat(document.getElementById('hours').value || '0');
+  const date = document.getElementById('entryDate').value || todayISO();
+  const system = document.getElementById('system').value.trim();
+  const note = document.getElementById('note').value.trim();
+
+  if (!cat) { toast('Odaberi kategoriju'); return; }
+  if (!desc) { toast('Upiši opis posla'); return; }
+  if (!hours || hours <= 0) { toast('Upiši sate'); return; }
+
+  const now = Date.now();
+  const entry = {
+    id: now,
+    date, client: selectedClient,
+    category: cat, description: desc,
+    hours, system, note,
+    createdAt: new Date(now).toISOString(),
+    updatedAt: now
+  };
+
+  const entries = loadEntries();
+  entries.unshift(entry);
+  saveEntries(entries);
+  schedulePush();
+
+  // Reset form
+  document.getElementById('description').value = '';
+  document.getElementById('hours').value = '';
+  document.getElementById('system').value = '';
+  document.getElementById('note').value = '';
+  document.querySelectorAll('.hour-preset').forEach(x => x.classList.remove('selected'));
+  selectedHours = null;
+  document.getElementById('category').value = '';
+  // keep client + date
+
+  refreshStats();
+  toast('✓ Spremljeno');
+}
+
+// === Render ===
+function refreshStats() {
+  const entries = visibleEntries();
+  const today = todayISO();
+  const now = new Date();
+  const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay() + (now.getDay()===0?-6:1));
+  const ws = weekStart.toISOString().slice(0,10);
+  const monthPrefix = today.slice(0,7);
+
+  let todayH = 0, weekH = 0, monthH = 0;
+  entries.forEach(e => {
+    if (e.date === today) todayH += e.hours;
+    if (e.date >= ws) weekH += e.hours;
+    if (e.date.startsWith(monthPrefix)) monthH += e.hours;
+  });
+
+  document.getElementById('statToday').textContent = todayH.toFixed(1);
+  document.getElementById('statWeek').textContent = weekH.toFixed(1);
+  document.getElementById('statMonth').textContent = monthH.toFixed(1);
+
+  const months = ['siječnja','veljače','ožujka','travnja','svibnja','lipnja','srpnja','kolovoza','rujna','listopada','studenoga','prosinca'];
+  const days = ['nedjelja','ponedjeljak','utorak','srijeda','četvrtak','petak','subota'];
+  document.getElementById('todayLabel').textContent =
+    `${days[now.getDay()]}, ${now.getDate()}. ${months[now.getMonth()]} ${now.getFullYear()}.`;
+}
+
+function renderList() {
+  const entries = visibleEntries().slice(0, 30);
+  const container = document.getElementById('entryList');
+  if (entries.length === 0) {
+    container.innerHTML = '<div class="empty">Još nema zapisa. Otvori "Novi" i dodaj prvi.</div>';
+    return;
+  }
+  container.innerHTML = entries.map(e => `
+    <div class="entry">
+      <div class="entry-head">
+        <span class="entry-client">${escapeHtml(e.client)}</span>
+        <span class="entry-meta">${formatDateHR(e.date)} • ${e.hours.toFixed(2)}h</span>
+      </div>
+      <div class="entry-desc">${escapeHtml(e.description)}</div>
+      <div>
+        <span class="entry-cat">${escapeHtml(e.category)}</span>
+        ${e.system ? `<span class="entry-cat">${escapeHtml(e.system)}</span>` : ''}
+      </div>
+      ${e.note ? `<div style="font-size:12px;color:#6B7280;margin-top:6px;font-style:italic;">${escapeHtml(e.note)}</div>` : ''}
+      <div class="entry-actions">
+        <div class="entry-action delete" onclick="deleteEntry(${e.id})">Obriši</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderMonth() {
+  const pick = document.getElementById('monthPick');
+  // populate
+  const entries = visibleEntries();
+  const months = new Set(entries.map(e => e.date.slice(0,7)));
+  const current = todayISO().slice(0,7);
+  months.add(current);
+  const sorted = Array.from(months).sort().reverse();
+  pick.innerHTML = sorted.map(m => `<option value="${m}">${m}</option>`).join('');
+  if (!pick.value) pick.value = current;
+  pick.onchange = () => refreshMonthView(pick.value);
+  refreshMonthView(pick.value);
+}
+
+function refreshMonthView(month) {
+  const entries = visibleEntries().filter(e => e.date.startsWith(month));
+  const byClient = {};
+  CLIENTS.forEach(c => byClient[c] = { hours: 0, tasks: 0, entries: [] });
+  entries.forEach(e => {
+    if (!byClient[e.client]) byClient[e.client] = { hours: 0, tasks: 0, entries: [] };
+    byClient[e.client].hours += e.hours;
+    byClient[e.client].tasks += 1;
+    byClient[e.client].entries.push(e);
+  });
+
+  document.getElementById('monthSummary').innerHTML = Object.entries(byClient)
+    .filter(([c, d]) => d.tasks > 0)
+    .map(([c, d]) => `
+      <div class="month-client">
+        <div class="month-client-name">${escapeHtml(c)}</div>
+        <div class="month-client-hours">${d.hours.toFixed(1)}h</div>
+        <div class="month-client-tasks">${d.tasks} ${d.tasks === 1 ? 'zadatak' : 'zadataka'}</div>
+      </div>
+    `).join('') || '<div class="empty">Nema zapisa za ovaj mjesec.</div>';
+
+  document.getElementById('monthDetail').innerHTML = Object.entries(byClient)
+    .filter(([c, d]) => d.tasks > 0)
+    .map(([c, d]) => `
+      <div style="margin-bottom:14px;">
+        <div style="font-weight:700;color:#1F4E79;margin-bottom:6px;">${escapeHtml(c)} (${d.hours.toFixed(1)}h)</div>
+        ${d.entries.map(e => `
+          <div style="font-size:13px;padding:6px 0;border-bottom:1px solid #F3F4F6;">
+            <span style="color:#6B7280;font-size:11px;">${formatDateHR(e.date)} • ${e.hours.toFixed(2)}h</span><br>
+            ${escapeHtml(e.description)}
+          </div>
+        `).join('')}
+      </div>
+    `).join('') || '';
+}
+
+// === Export ===
+function exportText() {
+  const entries = visibleEntries();
+  if (entries.length === 0) { toast('Nema zapisa za izvoz'); return; }
+  const lines = [
+    '=== CS-MOD Quick Log Export ===',
+    `Datum: ${new Date().toISOString().slice(0,19)}`,
+    `Broj zapisa: ${entries.length}`,
+    '',
+    'Datum | Klijent | Kategorija | Opis | Sati | Sustav | Napomena',
+    ...entries.slice().reverse().map(e =>
+      `${e.date} | ${e.client} | ${e.category} | ${e.description.replace(/\|/g,'/')} | ${e.hours} | ${e.system||''} | ${e.note||''}`
+    )
+  ];
+  const text = lines.join('\n');
+
+  // Copy to clipboard
+  navigator.clipboard.writeText(text).then(() => {
+    document.getElementById('exportContent').textContent = text;
+    document.getElementById('exportModal').classList.add('show');
+  }).catch(() => {
+    // fallback
+    document.getElementById('exportContent').textContent = text;
+    document.getElementById('exportModal').classList.add('show');
+  });
+}
+
+function downloadJSON() {
+  const entries = loadEntries();
+  const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const today = todayISO();
+  a.href = url;
+  a.download = `cs-mod-log-${today}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('JSON preuzet');
+}
+
+function deleteEntry(id) {
+  if (!confirm('Obrisati zapis?')) return;
+  const entries = loadEntries();
+  const idx = entries.findIndex(e => e.id === id);
+  if (idx >= 0) {
+    entries[idx].deleted = true;
+    entries[idx].updatedAt = Date.now();
+    saveEntries(entries);
+  }
+  renderList();
+  refreshStats();
+  schedulePush();
+  toast('Obrisano');
+}
+
+function clearAll() {
+  if (!confirm('SIGURNO obrisati SVE zapise? Ova radnja se ne može poništiti.')) return;
+  if (!confirm('Stvarno? Sve sati i svi opisi će nestati.')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  renderList();
+  refreshStats();
+  toast('Sve obrisano');
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+let toastTimer;
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// === GitHub Gist sync ===
+function getSyncConfig() {
+  try {
+    return JSON.parse(localStorage.getItem(SYNC_KEY) || '{}');
+  } catch (e) { return {}; }
+}
+function setSyncConfig(cfg) {
+  localStorage.setItem(SYNC_KEY, JSON.stringify(cfg));
+}
+
+function setSyncStatus(state, msg) {
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  const status = document.getElementById('syncStatus');
+  dot.className = 'sync-dot ' + (state || '');
+  if (state === 'ok' && !msg) msg = 'Sinkronizirano';
+  if (state === 'busy' && !msg) msg = 'Sinkroniziram...';
+  if (state === 'err' && !msg) msg = 'Greška u sync-u';
+  label.textContent = msg || 'Sync nije postavljen';
+  if (status) status.textContent = msg || '';
+}
+
+function mergeEntries(local, remote) {
+  const byId = {};
+  for (const e of local) byId[e.id] = e;
+  for (const e of remote) {
+    const existing = byId[e.id];
+    const eTs = e.updatedAt || (e.createdAt ? new Date(e.createdAt).getTime() : 0) || e.id || 0;
+    if (!existing) { byId[e.id] = e; continue; }
+    const exTs = existing.updatedAt || (existing.createdAt ? new Date(existing.createdAt).getTime() : 0) || existing.id || 0;
+    if (eTs > exTs) byId[e.id] = e;
+  }
+  return Object.values(byId).sort((a, b) => (b.id || 0) - (a.id || 0));
+}
+
+async function pullFromGist({ silent } = {}) {
+  const cfg = getSyncConfig();
+  if (!cfg.token || !cfg.gistId) {
+    if (!silent) setSyncStatus('', 'Sync nije postavljen');
+    return null;
+  }
+  if (!silent) setSyncStatus('busy', 'Povlačim...');
+  try {
+    const res = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+      headers: { 'Authorization': `Bearer ${cfg.token}`, 'Accept': 'application/vnd.github+json' }
+    });
+    if (!res.ok) throw new Error(`pull HTTP ${res.status}`);
+    const gist = await res.json();
+    const file = gist.files && gist.files[GIST_FILENAME];
+    if (!file) throw new Error(`Gist nema datoteku ${GIST_FILENAME}`);
+    let remoteEntries;
+    if (file.truncated && file.raw_url) {
+      const r2 = await fetch(file.raw_url);
+      remoteEntries = JSON.parse(await r2.text());
+    } else {
+      remoteEntries = JSON.parse(file.content || '[]');
+    }
+    const local = loadEntries();
+    const merged = mergeEntries(local, remoteEntries);
+    saveEntries(merged);
+    setSyncStatus('ok', `OK (${merged.filter(e => !e.deleted).length} zapisa, ${new Date().toLocaleTimeString('hr-HR')})`);
+    refreshStats();
+    renderList();
+    return merged;
+  } catch (e) {
+    setSyncStatus('err', `Pull greška: ${e.message}`);
+    throw e;
+  }
+}
+
+async function pushToGist() {
+  const cfg = getSyncConfig();
+  if (!cfg.token) {
+    setSyncStatus('', 'Token nije postavljen');
+    return;
+  }
+  const entries = loadEntries();
+  const content = JSON.stringify(entries, null, 2);
+  setSyncStatus('busy', 'Spremam...');
+  try {
+    if (!cfg.gistId) {
+      // Create new private gist
+      const res = await fetch('https://api.github.com/gists', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${cfg.token}`,
+          'Accept': 'application/vnd.github+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          description: 'CS-MOD Quick Log data (private)',
+          public: false,
+          files: { [GIST_FILENAME]: { content } }
+        })
+      });
+      if (!res.ok) throw new Error(`create HTTP ${res.status}`);
+      const gist = await res.json();
+      setSyncConfig({ token: cfg.token, gistId: gist.id });
+      const idInput = document.getElementById('ghGistId');
+      if (idInput) idInput.value = gist.id;
+      setSyncStatus('ok', `Gist kreiran (ID: ${gist.id.slice(0,8)}…)`);
+    } else {
+      const res = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${cfg.token}`,
+          'Accept': 'application/vnd.github+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ files: { [GIST_FILENAME]: { content } } })
+      });
+      if (!res.ok) throw new Error(`push HTTP ${res.status}`);
+      setSyncStatus('ok', `OK (${entries.filter(e => !e.deleted).length} zapisa, ${new Date().toLocaleTimeString('hr-HR')})`);
+    }
+  } catch (e) {
+    setSyncStatus('err', `Push greška: ${e.message}`);
+    throw e;
+  }
+}
+
+let pushTimer;
+function schedulePush() {
+  const cfg = getSyncConfig();
+  if (!cfg.token) return; // sync nije postavljen, samo lokalno
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(() => {
+    pushToGist().catch(err => console.error('Push failed:', err));
+  }, 2500);
+}
+
+async function syncNow() {
+  try {
+    await pullFromGist();
+    await pushToGist();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function saveAndConnect() {
+  const token = document.getElementById('ghToken').value.trim();
+  const gistId = document.getElementById('ghGistId').value.trim();
+  if (!token) { toast('Upiši token'); return; }
+  setSyncConfig({ token, gistId });
+  syncNow();
+}
+
+function initSyncUI() {
+  const cfg = getSyncConfig();
+  if (cfg.token) {
+    document.getElementById('ghToken').value = cfg.token;
+    document.getElementById('ghGistId').value = cfg.gistId || '';
+    setSyncStatus('', 'Spreman za sync');
+    // Pull on app open if configured
+    pullFromGist({ silent: false }).catch(() => {});
+  } else {
+    setSyncStatus('', 'Sync nije postavljen');
+  }
+}
+
+// === Init ===
+window.addEventListener('DOMContentLoaded', () => {
+  setupClients();
+  setupCategories();
+  setupHourPresets();
+  setupTabs();
+  document.getElementById('entryDate').value = todayISO();
+  document.getElementById('saveBtn').addEventListener('click', save);
+  document.getElementById('exportBtn').addEventListener('click', exportText);
+  document.getElementById('downloadBtn').addEventListener('click', downloadJSON);
+  document.getElementById('clearBtn').addEventListener('click', clearAll);
+  document.getElementById('syncSaveBtn').addEventListener('click', saveAndConnect);
+  document.getElementById('syncNowBtn').addEventListener('click', syncNow);
+  refreshStats();
+  initSyncUI();
+
+  // Pull također kad se prozor aktivira (vraćaš se na app)
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      const cfg = getSyncConfig();
+      if (cfg.token && cfg.gistId) pullFromGist({ silent: true }).catch(() => {});
+    }
+  });
+});
+</script>
+</body>
+</html>
